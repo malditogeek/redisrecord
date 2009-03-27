@@ -2,10 +2,10 @@
 A "virtual" Object Relational Mapper on top of [Redis](http://redis.googlecode.com).
 
 This is just a proof-of-concept. Allows you to create relationships <br/>
-between classes and store them in Redis, a key-value storage.
+between classes and store them in Redis, a key-value storage. Totally schema-less.
 
 ## Author
-Author:: Mauro Pompilio <hackers.are.rockstars@gmail.com>
+Mauro Pompilio <hackers.are.rockstars@gmail.com>
 
 ## License
 MIT
@@ -13,6 +13,7 @@ MIT
 
 ## Example
 
+`
  class User < RedisRecord::Base
    database 15
    has_many :posts
@@ -68,6 +69,7 @@ MIT
  => #<User:0xb75c8480 @stored_attrs=#<Set: {:updated_at, :age, :name, :whatever, :id, :created_at}>, @cached_attrs={:updated_at=>"1238173566", :age=>"25", :name=>"Mauro", :whatever=>"as_many_attributesas you want", :id=>"1", :created_at=>"1238173522.49808"}, @opts={:stored=>true}>
  >> u.posts
  => [#<Post:0xb75c20a8 @stored_attrs=#<Set: {:updated_at, :title, :id, :user_id, :created_at}>, @cached_attrs={:updated_at=>"1238173641", :title=>"New Post", :id=>"1", :user_id=>"1", :created_at=>"1238173641.17936"}, @opts={:stored=>true}>, #<Post:0xb75bdb0c @stored_attrs=#<Set: {:updated_at, :title, :id, :user_id, :created_at}>, @cached_attrs={:updated_at=>"1238173858", :title=>"Another post", :id=>"2", :user_id=>"1", :created_at=>"1238173858.82325"}, @opts={:stored=>true}>]
+`
 
 
 
