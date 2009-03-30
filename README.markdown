@@ -1,15 +1,14 @@
 # RedisRecord
 A "virtual" Object Relational Mapper on top of [Redis](http://redis.googlecode.com).
 
-This is just a proof-of-concept. Allows you to create relationships between classes <br/>
-and store them in Redis, a key-value storage. Totally schema-less.
+This is a proof-of-concept. Allows you to create schema-less data structures and <br/>
+build relationships between them, using Redis as storage.
 
 ## Author
 Mauro Pompilio <hackers.are.rockstars@gmail.com>
 
 ## License
 MIT
-
 
 ## Example
 		

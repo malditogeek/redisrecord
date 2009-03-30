@@ -1,3 +1,5 @@
+# = Sample file
+#
 require 'lib/redisrecord'
 
 # example.rb demo class
