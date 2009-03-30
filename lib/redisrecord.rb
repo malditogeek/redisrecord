@@ -1,8 +1,8 @@
 # = RedisRecord
 # A "virtual" Object Relational Mapper on top of Redis[http://redis.googlecode.com].
 #
-# This is just a proof-of-concept. Allows you to create relationships 
-# between classes and store them in Redis, a key-value storage.
+# This is a proof-of-concept. Allows you to create schema-less data structures and
+# build relationships between them, using Redis as storage.
 #
 # == Main repository
 # http://github.com/slacker/redisrecord/tree/master
@@ -82,6 +82,9 @@ module RedisRecord
 
   # Not found exception.
   class RecordNotFound < Exception; end
+
+  # Duplicate attribute exception.
+  class DuplicateAttribute < Exception; end
  
   # Connection to Redis.
   class RedisConnection < Redis; end
@@ -182,7 +185,7 @@ module RedisRecord
             records << instantiate(object_attrs)
           rescue RedisError
             raise RecordNotFound if options[:should_raise]
-            records << nil
+            #records << nil
           end
         end
         (records.length == 1 ? records[0] : records)
@@ -198,7 +201,7 @@ module RedisRecord
 
       # Returns a new object with the given attributes hash.
       def instantiate(instance_attrs={})
-        self.new(instance_attrs, :stored => true)
+        new(instance_attrs, :stored => true)
       end
 
       # Belongs_to relationship initialization.
@@ -264,13 +267,12 @@ module RedisRecord
       end
 
       # updated_at
-      @@redis["#{self.class.name}:#{@cached_attrs[:id]}:updated_at"] = Time.now.to_i
+      @@redis["#{self.class.name}:#{@cached_attrs[:id]}:updated_at"] = Time.now.to_f.to_s
       stored << :updated_at 
 
       # Relationships
       @@reflections[self.class.name.to_sym][:belongs_to].each do |klass|
-        klass_id = "#{klass}_id".to_sym
-        @@redis.set_add("#{klass.to_s.camelize}:#{@cached_attrs[klass_id]}:#{self.class.name.underscore}_ids", @cached_attrs[:id])
+        @@redis.set_add("#{klass.to_s.camelize}:#{@cached_attrs[klass.to_s.foreign_key.to_sym]}:#{self.class.name.underscore}_ids", @cached_attrs[:id])
       end
 
       return stored.to_a
@@ -320,6 +322,7 @@ module RedisRecord
     def add_attributes(hash)
       hash.each_pair do |k,v|
         k = k.to_sym
+        #raise DuplicateAttribute unless (k == :id or !self.respond_to?(k))
         if k == :id or !self.respond_to?(k)
           @cached_attrs[k] = v
           meta = class << self; self; end
