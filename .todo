@@ -1,0 +1,14 @@
+<todo version="0.1.19">
+    <note priority="medium" time="1238372854">
+        Write specs for the extensions.
+    </note>
+    <note priority="medium" time="1238373450">
+        Find an easy way to allow data sharding.
+    </note>
+    <note priority="medium" time="1238373496">
+        Maybe the find, sort_by and search methods should be merged.
+    </note>
+    <note priority="medium" time="1238373559">
+        Allow a YAML file with the Sphinx schema for the sphinx_export.
+    </note>
+</todo>
