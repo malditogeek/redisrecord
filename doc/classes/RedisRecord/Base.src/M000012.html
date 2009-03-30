@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>search (RedisRecord::Base)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/redisrecord/extensions.rb, line 102</span>
+      <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">search</span>(<span class="ruby-operator">*</span><span class="ruby-identifier">args</span>)
+        <span class="ruby-identifier">options</span> = <span class="ruby-identifier">args</span>.<span class="ruby-identifier">last</span>.<span class="ruby-identifier">is_a?</span>(<span class="ruby-constant">Hash</span>) <span class="ruby-operator">?</span> <span class="ruby-identifier">args</span>.<span class="ruby-identifier">pop</span> <span class="ruby-operator">:</span> {}
+        <span class="ruby-identifier">client</span> = <span class="ruby-constant">Riddle</span><span class="ruby-operator">::</span><span class="ruby-constant">Client</span>.<span class="ruby-identifier">new</span>
+        <span class="ruby-identifier">client</span>.<span class="ruby-identifier">match_mode</span> = <span class="ruby-identifier">:extended</span>
+        <span class="ruby-identifier">q</span> = <span class="ruby-identifier">client</span>.<span class="ruby-identifier">query</span>(<span class="ruby-node">&quot;#{args} @class #{name}&quot;</span>)
+        <span class="ruby-identifier">ids</span> = <span class="ruby-identifier">q</span>[<span class="ruby-identifier">:matches</span>].<span class="ruby-identifier">map</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">r</span><span class="ruby-operator">|</span> <span class="ruby-identifier">r</span>[<span class="ruby-identifier">:doc</span>]}
+        <span class="ruby-identifier">find</span>(<span class="ruby-identifier">ids</span>)
+      <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

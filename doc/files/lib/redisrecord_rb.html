@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>File: redisrecord.rb</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+  <script type="text/javascript">
+  // <![CDATA[
+
+  function popupCode( url ) {
+    window.open(url, "Code", "resizable=yes,scrollbars=yes,toolbar=no,status=no,height=150,width=400")
+  }
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+    
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  
+  // Make codeblocks hidden by default
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  
+  // ]]>
+  </script>
+
+</head>
+<body>
+
+
+
+  <div id="fileHeader">
+    <h1>redisrecord.rb</h1>
+    <table class="header-table">
+    <tr class="top-aligned-row">
+      <td><strong>Path:</strong></td>
+      <td>lib/redisrecord.rb
+      </td>
+    </tr>
+    <tr class="top-aligned-row">
+      <td><strong>Last Update:</strong></td>
+      <td>Mon Mar 30 02:24:53 +0200 2009</td>
+    </tr>
+    </table>
+  </div>
+  <!-- banner header -->
+
+  <div id="bodyContent">
+
+
+
+  <div id="contextContent">
+
+    <div id="description">
+      <h1><a href="../../classes/RedisRecord.html">RedisRecord</a></h1>
+<p>
+A &quot;virtual&quot; Object Relational Mapper on top of <a
+href="http://redis.googlecode.com">Redis</a>.
+</p>
+<p>
+This is a proof-of-concept. Allows you to create schema-less data
+structures and build relationships between them, using Redis as storage.
+</p>
+<h2>Main repository</h2>
+<p>
+<a
+href="http://github.com/slacker/redisrecord/tree/master">github.com/slacker/redisrecord/tree/master</a>
+</p>
+<h2>Author</h2>
+<p>
+Mauro Pompilio &lt;hackers.are.rockstars@gmail.com&gt;
+</p>
+<h2>License</h2>
+<p>
+MIT
+</p>
+<h2>Example</h2>
+<pre>
+ class User &lt; RedisRecord
+   database 15
+   has_many :posts
+ end
+
+ class Post &lt; RedisRecord
+   database 15
+   belongs_to :user
+   has_many :comments
+ end
+
+ class Comment &lt; RedisRecord
+   database 15
+   belongs_to :post
+   belongs_to :user
+ end
+
+ &gt;&gt; u = User.new
+ =&gt; #&lt;User:0xb761c3f0 @stored_attrs=#&lt;Set: {}&gt;, @cached_attrs={}, @opts={}&gt;
+ &gt;&gt; u.name = 'Mauro'
+ =&gt; &quot;Mauro&quot;
+ &gt;&gt; u.age = 25
+ =&gt; 25
+ &gt;&gt; u.save
+ =&gt; [:updated_at, :age, :name, :id, :created_at]
+ &gt;&gt; u.whatever = {:as_many_attributes =&gt; 'as you want'}
+ =&gt; {:as_many_attributes=&gt;&quot;as you want&quot;}
+ &gt;&gt; u.save
+ =&gt; [:updated_at, :whatever]
+ &gt;&gt; u
+ =&gt; #&lt;User:0xb761c3f0 @stored_attrs=#&lt;Set: {:updated_at, :age, :name, :whatever, :id, :created_at}&gt;, @cached_attrs={:updated_at=&gt;&quot;1238173522.49843&quot;, :age=&gt;25, :name=&gt;&quot;Mauro&quot;, :whatever=&gt;{:as_many_attributes=&gt;&quot;as you want&quot;}, :id=&gt;1, :created_at=&gt;&quot;1238173522.49808&quot;}, @opts={}&gt;
+ &gt;&gt; u = User.find(1)
+ =&gt; #&lt;User:0xb760a2a4 @stored_attrs=#&lt;Set: {:updated_at, :age, :name, :whatever, :id, :created_at}&gt;, @cached_attrs={:updated_at=&gt;&quot;1238173566&quot;, :age=&gt;&quot;25&quot;, :name=&gt;&quot;Mauro&quot;, :whatever=&gt;&quot;as_many_attributesas you want&quot;, :id=&gt;&quot;1&quot;, :created_at=&gt;&quot;1238173522.49808&quot;}, @opts={:stored=&gt;true}&gt;
+ &gt;&gt; p = Post.new
+ =&gt; #&lt;Post:0xb7608210 @stored_attrs=#&lt;Set: {}&gt;, @cached_attrs={:user_id=&gt;nil}, @opts={}&gt;
+ &gt;&gt; p.title = 'New Post'
+ =&gt; &quot;New Post&quot;
+ &gt;&gt; p.user_id = u.id
+ =&gt; &quot;1&quot;
+ &gt;&gt; p.save
+ =&gt; [:updated_at, :title, :id, :user_id, :created_at:
+ &gt;&gt; p2 = Post.new
+ =&gt; #&lt;Post:0xb75e5ad0 @stored_attrs=#&lt;Set: {}&gt;, @cached_attrs={:user_id=&gt;nil}, @opts={}&gt;
+ &gt;&gt; p2.title = 'Another post'
+ =&gt; &quot;Another post&quot;
+ &gt;&gt; p2.user_id = u.id
+ =&gt; &quot;1&quot;
+ &gt;&gt; p2.save
+ =&gt; [:updated_at, :title, :id, :user_id, :created_at]
+ &gt;&gt; p.user
+ =&gt; #&lt;User:0xb75ce754 @stored_attrs=#&lt;Set: {:updated_at, :age, :name, :whatever, :id, :created_at}&gt;, @cached_attrs={:updated_at=&gt;&quot;1238173566&quot;, :age=&gt;&quot;25&quot;, :name=&gt;&quot;Mauro&quot;, :whatever=&gt;&quot;as_many_attributesas you want&quot;, :id=&gt;&quot;1&quot;, :created_at=&gt;&quot;1238173522.49808&quot;}, @opts={:stored=&gt;true}&gt;
+ &gt;&gt; p2.user
+ =&gt; #&lt;User:0xb75c8480 @stored_attrs=#&lt;Set: {:updated_at, :age, :name, :whatever, :id, :created_at}&gt;, @cached_attrs={:updated_at=&gt;&quot;1238173566&quot;, :age=&gt;&quot;25&quot;, :name=&gt;&quot;Mauro&quot;, :whatever=&gt;&quot;as_many_attributesas you want&quot;, :id=&gt;&quot;1&quot;, :created_at=&gt;&quot;1238173522.49808&quot;}, @opts={:stored=&gt;true}&gt;
+ &gt;&gt; u.posts
+ =&gt; [#&lt;Post:0xb75c20a8 @stored_attrs=#&lt;Set: {:updated_at, :title, :id, :user_id, :created_at}&gt;, @cached_attrs={:updated_at=&gt;&quot;1238173641&quot;, :title=&gt;&quot;New Post&quot;, :id=&gt;&quot;1&quot;, :user_id=&gt;&quot;1&quot;, :created_at=&gt;&quot;1238173641.17936&quot;}, @opts={:stored=&gt;true}&gt;, #&lt;Post:0xb75bdb0c @stored_attrs=#&lt;Set: {:updated_at, :title, :id, :user_id, :created_at}&gt;, @cached_attrs={:updated_at=&gt;&quot;1238173858&quot;, :title=&gt;&quot;Another post&quot;, :id=&gt;&quot;2&quot;, :user_id=&gt;&quot;1&quot;, :created_at=&gt;&quot;1238173858.82325&quot;}, @opts={:stored=&gt;true}&gt;]
+</pre>
+
+    </div>
+
+    <div id="requires-list">
+      <h3 class="section-bar">Required files</h3>
+
+      <div class="name-list">
+      rubygems&nbsp;&nbsp;
+      activesupport&nbsp;&nbsp;
+      redis&nbsp;&nbsp;
+      </div>
+    </div>
+
+   </div>
+
+
+  </div>
+
+
+    <!-- if includes -->
+
+    <div id="section">
+
+
+
+
+
+      
+
+
+    <!-- if method_list -->
+
+
+  </div>
+
+
+<div id="validator-badges">
+  <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+</div>
+
+</body>
+</html>

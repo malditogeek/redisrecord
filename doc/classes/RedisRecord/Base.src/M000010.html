@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>populate_from_yaml (RedisRecord::Base)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/redisrecord/extensions.rb, line 32</span>
+      <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">populate_from_yaml</span>(<span class="ruby-identifier">yaml_file</span>)
+        <span class="ruby-identifier">entries</span> = <span class="ruby-constant">YAML</span><span class="ruby-operator">::</span><span class="ruby-identifier">load_file</span>(<span class="ruby-identifier">yaml_file</span>)
+        <span class="ruby-identifier">records</span> = []
+        <span class="ruby-identifier">entries</span>.<span class="ruby-identifier">keys</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">k</span><span class="ruby-operator">|</span>
+          <span class="ruby-keyword kw">begin</span>
+            <span class="ruby-identifier">r</span> = <span class="ruby-identifier">new</span>(<span class="ruby-identifier">entries</span>[<span class="ruby-identifier">k</span>])
+                  <span class="ruby-identifier">r</span>.<span class="ruby-identifier">save</span> 
+                  <span class="ruby-identifier">records</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">r</span>
+          <span class="ruby-keyword kw">rescue</span> <span class="ruby-constant">Exception</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">e</span> 
+                  <span class="ruby-identifier">records</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-keyword kw">nil</span>
+          <span class="ruby-keyword kw">end</span>
+        <span class="ruby-keyword kw">end</span>
+        <span class="ruby-identifier">records</span>
+      <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

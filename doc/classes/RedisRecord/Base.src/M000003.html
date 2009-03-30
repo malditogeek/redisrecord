@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>sort_by (RedisRecord::Base)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/redisrecord.rb, line 148</span>
+      <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">sort_by</span>(<span class="ruby-identifier">attribute</span>, <span class="ruby-identifier">options</span>={})
+        <span class="ruby-identifier">limit</span>  = <span class="ruby-identifier">options</span>[<span class="ruby-identifier">:limit</span>]  <span class="ruby-operator">||</span> <span class="ruby-value">10</span>
+        <span class="ruby-identifier">offset</span> = <span class="ruby-identifier">options</span>[<span class="ruby-identifier">:offset</span>] <span class="ruby-operator">||</span> <span class="ruby-value">0</span>
+        <span class="ruby-identifier">order</span>  = <span class="ruby-identifier">options</span>[<span class="ruby-identifier">:order</span>]  <span class="ruby-operator">||</span> <span class="ruby-value str">'ALPHA DESC'</span>
+        <span class="ruby-identifier">ids</span> = <span class="ruby-ivar">@@redis</span>.<span class="ruby-identifier">sort</span>(<span class="ruby-node">&quot;#{name}:list&quot;</span>, 
+                           <span class="ruby-identifier">:by</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{name}:*:#{attribute}&quot;</span>, 
+                           <span class="ruby-identifier">:limit</span> =<span class="ruby-operator">&gt;</span> [<span class="ruby-identifier">offset</span>, <span class="ruby-identifier">limit</span>],
+                           <span class="ruby-identifier">:order</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">order</span>,
+                           <span class="ruby-identifier">:get</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-node">&quot;#{name}:*:id&quot;</span>)
+        <span class="ruby-identifier">find_from_ids</span>(<span class="ruby-identifier">ids</span>, <span class="ruby-identifier">options</span>)
+      <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

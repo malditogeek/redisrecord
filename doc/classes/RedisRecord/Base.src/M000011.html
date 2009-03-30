@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>sphinx_export (RedisRecord::Base)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/redisrecord/extensions.rb, line 59</span>
+      <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">sphinx_export</span>(<span class="ruby-identifier">records</span>, <span class="ruby-identifier">outfile</span>=<span class="ruby-value str">'/tmp/redisindex.xml'</span>)
+        <span class="ruby-identifier">sphinx_docset</span> = <span class="ruby-constant">XML</span><span class="ruby-operator">::</span><span class="ruby-constant">Document</span>.<span class="ruby-identifier">new</span>()
+        <span class="ruby-identifier">sphinx_docset</span>.<span class="ruby-identifier">root</span> = <span class="ruby-constant">XML</span><span class="ruby-operator">::</span><span class="ruby-constant">Node</span>.<span class="ruby-identifier">new</span>(<span class="ruby-value str">'sphinx:docset'</span>)
+        
+        <span class="ruby-identifier">sphinx_schema</span> = <span class="ruby-constant">XML</span><span class="ruby-operator">::</span><span class="ruby-constant">Node</span>.<span class="ruby-identifier">new</span>(<span class="ruby-value str">'sphinx:schema'</span>)
+        <span class="ruby-identifier">records_attrs</span> = <span class="ruby-identifier">records</span>.<span class="ruby-identifier">map</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">r</span><span class="ruby-operator">|</span> <span class="ruby-identifier">r</span>.<span class="ruby-identifier">attrs</span> }
+        <span class="ruby-identifier">records_attrs</span>.<span class="ruby-identifier">flatten!</span>.<span class="ruby-identifier">uniq!</span>
+        [<span class="ruby-identifier">:created_at</span>, <span class="ruby-identifier">:updated_at</span>].<span class="ruby-identifier">each</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">a</span><span class="ruby-operator">|</span>
+          <span class="ruby-identifier">records_attrs</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-identifier">a</span>)
+          <span class="ruby-identifier">sphinx_attr</span> = <span class="ruby-constant">XML</span><span class="ruby-operator">::</span><span class="ruby-constant">Node</span>.<span class="ruby-identifier">new</span>(<span class="ruby-value str">'sphinx:attr'</span>)
+          <span class="ruby-identifier">sphinx_attr</span>.<span class="ruby-identifier">attributes</span>[<span class="ruby-value str">'name'</span>] = <span class="ruby-identifier">a</span>.<span class="ruby-identifier">to_s</span>
+          <span class="ruby-identifier">sphinx_attr</span>.<span class="ruby-identifier">attributes</span>[<span class="ruby-value str">'type'</span>] = <span class="ruby-value str">'timestamp'</span>
+          <span class="ruby-identifier">sphinx_schema</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">sphinx_attr</span>
+        <span class="ruby-keyword kw">end</span>
+
+        <span class="ruby-identifier">records_attrs</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">a</span><span class="ruby-operator">|</span>
+          <span class="ruby-identifier">sphinx_field</span> = <span class="ruby-constant">XML</span><span class="ruby-operator">::</span><span class="ruby-constant">Node</span>.<span class="ruby-identifier">new</span>(<span class="ruby-value str">'sphinx:field'</span>)
+          <span class="ruby-identifier">sphinx_field</span>.<span class="ruby-identifier">attributes</span>[<span class="ruby-value str">'name'</span>]= <span class="ruby-identifier">a</span>.<span class="ruby-identifier">to_s</span>
+          <span class="ruby-identifier">sphinx_schema</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">sphinx_field</span>
+        <span class="ruby-keyword kw">end</span>
+        <span class="ruby-identifier">sphinx_attr</span> = <span class="ruby-constant">XML</span><span class="ruby-operator">::</span><span class="ruby-constant">Node</span>.<span class="ruby-identifier">new</span>(<span class="ruby-value str">'sphinx:field'</span>)
+        <span class="ruby-identifier">sphinx_attr</span>.<span class="ruby-identifier">attributes</span>[<span class="ruby-value str">'name'</span>] = <span class="ruby-value str">'class'</span>
+        <span class="ruby-identifier">sphinx_schema</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">sphinx_attr</span>
+        
+        <span class="ruby-identifier">sphinx_docset</span>.<span class="ruby-identifier">root</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">sphinx_schema</span>
+        
+        <span class="ruby-identifier">records</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">record</span><span class="ruby-operator">|</span> 
+          <span class="ruby-identifier">sphinx_doc</span> = <span class="ruby-constant">XML</span><span class="ruby-operator">::</span><span class="ruby-constant">Node</span>.<span class="ruby-identifier">new</span>(<span class="ruby-value str">'sphinx:document'</span>)
+          <span class="ruby-identifier">sphinx_doc</span>.<span class="ruby-identifier">attributes</span>[<span class="ruby-value str">'id'</span>] = <span class="ruby-identifier">record</span>.<span class="ruby-identifier">id</span>
+          <span class="ruby-identifier">sphinx_doc</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-constant">XML</span><span class="ruby-operator">::</span><span class="ruby-constant">Node</span>.<span class="ruby-identifier">new</span>(<span class="ruby-value str">'class'</span>, <span class="ruby-identifier">record</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">name</span>)
+          <span class="ruby-identifier">record</span>.<span class="ruby-identifier">attrs</span>.<span class="ruby-identifier">each</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">key</span><span class="ruby-operator">|</span> <span class="ruby-identifier">sphinx_doc</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-constant">XML</span><span class="ruby-operator">::</span><span class="ruby-constant">Node</span>.<span class="ruby-identifier">new</span>(<span class="ruby-identifier">key</span>, <span class="ruby-identifier">record</span>.<span class="ruby-identifier">send</span>(<span class="ruby-identifier">key</span>).<span class="ruby-identifier">to_s</span>) }
+          <span class="ruby-identifier">sphinx_docset</span>.<span class="ruby-identifier">root</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">sphinx_doc</span> 
+        <span class="ruby-keyword kw">end</span>
+        
+        <span class="ruby-identifier">sphinx_docset</span>.<span class="ruby-identifier">save</span>(<span class="ruby-identifier">outfile</span>)
+        <span class="ruby-identifier">sphinx_docset</span>
+      <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>
