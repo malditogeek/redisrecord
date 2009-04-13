@@ -231,7 +231,7 @@ module RedisRecord
       end
      
       # Has_and_belongs_to_many relationship initialization.
-      def has_and_belogns_to_many(klass)
+      def has_and_belongs_to_many(klass)
         has_many klass
         belongs_to klass.to_s.foreign_key.to_sym
       end
