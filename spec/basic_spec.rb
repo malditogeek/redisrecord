@@ -8,7 +8,7 @@ describe "RedisRecord" do
 
   after do
     r = Redis.new
-    r.select_db 15
+    #r.select_db 15
     r.flush_db
   end
 

@@ -4,20 +4,20 @@ require 'lib/redisrecord'
 
 # example.rb demo class
 class User < RedisRecord::Base
-  database 15
+  #database 15
   has_many :posts
 end
 
 # example.rb demo class
 class Post < RedisRecord::Base
-  database 15
+  #database 15
   belongs_to :user
   has_many :comments
 end
 
 # example.rb demo class
 class Comment < RedisRecord::Base
-  database 15
+  #database 15
   belongs_to :post
   belongs_to :user
 end
