@@ -4,26 +4,26 @@ $:.push File.join(File.dirname(__FILE__), '..', 'lib')
 require 'redisrecord'
 
 # Spec helper
-class Customer < RedisRecord::Base
+class Customer < RedisRecord::Model
   #database 15
 end
 
 # Spec helper
-class User < RedisRecord::Base
+class User < RedisRecord::Model
   #database 15
   has_many :posts
   has_many :comments
 end
 
 # Spec helper
-class Post < RedisRecord::Base
+class Post < RedisRecord::Model
   #database 15
   belongs_to :user
   has_many :comments
 end
 
 # Spec helper
-class Comment < RedisRecord::Base
+class Comment < RedisRecord::Model
   #database 15
   belongs_to :post
   belongs_to :user

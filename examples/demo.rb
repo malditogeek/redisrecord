@@ -1,24 +1,36 @@
 # = Sample file
-#
 require 'lib/redisrecord'
 
 # example.rb demo class
-class User < RedisRecord::Base
-  #database 15
+class User < RedisRecord::Model
+  database 0
   has_many :posts
+  #has_one :moderator
 end
 
 # example.rb demo class
-class Post < RedisRecord::Base
-  #database 15
+class Post < RedisRecord::Model
+  database 1
   belongs_to :user
   has_many :comments
+  has_and_belongs_to_many :categories
 end
 
 # example.rb demo class
-class Comment < RedisRecord::Base
-  #database 15
+class Comment < RedisRecord::Model
+  database 15
   belongs_to :post
+  belongs_to :user
+end
+
+# example.rb demo class
+class Category < RedisRecord::Model
+  has_and_belongs_to_many :posts
+end
+
+# example.rb demo class
+class Moderator < RedisRecord::Model
+  database 15
   belongs_to :user
 end
 
@@ -44,6 +56,5 @@ end
 #p u.posts
 
 # Flush DB
-#r = Redis.new
-#r.select_db 15
+#r = Redis.new(:db => 15)
 #r.flush_db

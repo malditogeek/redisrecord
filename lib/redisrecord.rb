@@ -5,7 +5,7 @@
 # build relationships between them, using Redis as storage.
 #
 # == Main repository
-# http://github.com/slacker/redisrecord/tree/master
+# http://github.com/malditogeek/redisrecord/tree/master
 #
 # == Author
 # Mauro Pompilio <hackers.are.rockstars@gmail.com>
@@ -13,67 +13,7 @@
 # == License
 # MIT
 #
-#
-# == Example 
-#
-#  class User < RedisRecord
-#    database 15
-#    has_many :posts
-#  end
-#  
-#  class Post < RedisRecord
-#    database 15
-#    belongs_to :user
-#    has_many :comments
-#  end
-#  
-#  class Comment < RedisRecord
-#    database 15
-#    belongs_to :post
-#    belongs_to :user
-#  end 
-#
-#  >> u = User.new
-#  => #<User:0xb761c3f0 @stored_attrs=#<Set: {}>, @cached_attrs={}, @opts={}>
-#  >> u.name = 'Mauro'
-#  => "Mauro"
-#  >> u.age = 25
-#  => 25
-#  >> u.save
-#  => [:updated_at, :age, :name, :id, :created_at]
-#  >> u.whatever = {:as_many_attributes => 'as you want'}
-#  => {:as_many_attributes=>"as you want"}
-#  >> u.save
-#  => [:updated_at, :whatever]
-#  >> u
-#  => #<User:0xb761c3f0 @stored_attrs=#<Set: {:updated_at, :age, :name, :whatever, :id, :created_at}>, @cached_attrs={:updated_at=>"1238173522.49843", :age=>25, :name=>"Mauro", :whatever=>{:as_many_attributes=>"as you want"}, :id=>1, :created_at=>"1238173522.49808"}, @opts={}>
-#  >> u = User.find(1)
-#  => #<User:0xb760a2a4 @stored_attrs=#<Set: {:updated_at, :age, :name, :whatever, :id, :created_at}>, @cached_attrs={:updated_at=>"1238173566", :age=>"25", :name=>"Mauro", :whatever=>"as_many_attributesas you want", :id=>"1", :created_at=>"1238173522.49808"}, @opts={:stored=>true}>
-#  >> p = Post.new
-#  => #<Post:0xb7608210 @stored_attrs=#<Set: {}>, @cached_attrs={:user_id=>nil}, @opts={}>
-#  >> p.title = 'New Post'
-#  => "New Post"
-#  >> p.user_id = u.id
-#  => "1"
-#  >> p.save
-#  => [:updated_at, :title, :id, :user_id, :created_at:
-#  >> p2 = Post.new
-#  => #<Post:0xb75e5ad0 @stored_attrs=#<Set: {}>, @cached_attrs={:user_id=>nil}, @opts={}>
-#  >> p2.title = 'Another post'
-#  => "Another post"
-#  >> p2.user_id = u.id
-#  => "1"
-#  >> p2.save
-#  => [:updated_at, :title, :id, :user_id, :created_at]
-#  >> p.user
-#  => #<User:0xb75ce754 @stored_attrs=#<Set: {:updated_at, :age, :name, :whatever, :id, :created_at}>, @cached_attrs={:updated_at=>"1238173566", :age=>"25", :name=>"Mauro", :whatever=>"as_many_attributesas you want", :id=>"1", :created_at=>"1238173522.49808"}, @opts={:stored=>true}>
-#  >> p2.user
-#  => #<User:0xb75c8480 @stored_attrs=#<Set: {:updated_at, :age, :name, :whatever, :id, :created_at}>, @cached_attrs={:updated_at=>"1238173566", :age=>"25", :name=>"Mauro", :whatever=>"as_many_attributesas you want", :id=>"1", :created_at=>"1238173522.49808"}, @opts={:stored=>true}>
-#  >> u.posts
-#  => [#<Post:0xb75c20a8 @stored_attrs=#<Set: {:updated_at, :title, :id, :user_id, :created_at}>, @cached_attrs={:updated_at=>"1238173641", :title=>"New Post", :id=>"1", :user_id=>"1", :created_at=>"1238173641.17936"}, @opts={:stored=>true}>, #<Post:0xb75bdb0c @stored_attrs=#<Set: {:updated_at, :title, :id, :user_id, :created_at}>, @cached_attrs={:updated_at=>"1238173858", :title=>"Another post", :id=>"2", :user_id=>"1", :created_at=>"1238173858.82325"}, @opts={:stored=>true}>]
-#
 
-require 'rubygems'
 require 'activesupport'
 require 'redis'
 
@@ -90,22 +30,22 @@ module RedisRecord
   class RedisConnection < Redis; end
 
   # Base class.
-  class Base
+  class Model
     attr_reader :attrs, :stored_attrs
 
     # Redis connection
-    @@redis = RedisConnection.new#(:debug => true)
-    
+    @@redis = RedisConnection.new(:logger => Logger.new(STDOUT))
+
     # Reflections
     @@reflections = {}
- 
-    # Class methods 
+
+    # Class methods
     class << self
 
       # Generates reflections skeleton when the RedisRecord is inherited.
       def inherited(klass)
         @@reflections[klass.name.to_sym] = {}
-        [:belongs_to, :has_many, :has_and_belongs_to_many].each do |r|
+        [:belongs_to, :has_many].each do |r|
           @@reflections[klass.name.to_sym][r] = []
         end
       end
@@ -125,7 +65,6 @@ module RedisRecord
       #  * :should_raise: If *true* raise RecordNotFound exception on missing records. Defauls is *false*.
       def find(*args)
         options = args.last.is_a?(Hash) ? args.pop : {} 
-        records = []
         case args.first
           when :all
             find_all(options)
@@ -157,11 +96,28 @@ module RedisRecord
         find_from_ids(ids, options)
       end
 
+      def _connection
+        @@redis
+      end
+
+      def get_lookup(attr, value)
+        _connection.get("#{name}:lookup:#{attr}:#{value}")
+      end
+
       private # class methods
+
+      # Captures the *class* missing methods.
+      def method_missing(*args)
+        case args[0].to_s
+          when /^find_by_/
+            lookup = args[0].to_s.gsub(/^find_by_/, '')
+            find(get_lookup(lookup, args[1]))
+        end
+      end
 
       def find_all(options)
         all_ids = @@redis.list_range("#{name}:list", 0, -1)
-        find_from_ids(all_ids, options)
+        [find_from_ids(all_ids, options)].flatten
       end
 
       def find_first(options)
@@ -176,19 +132,21 @@ module RedisRecord
 
       def find_from_ids(ids, options={})
         records = []
-        [ids].flatten.each do |id|
+        ids = [ids].flatten
+        ids.each do |id|
           begin
             redis_attrs = @@redis.set_members("#{name}:#{id}:attrs").to_a
+            raise if redis_attrs.empty?
             stored_attrs = @@redis.mget(redis_attrs.map {|a| "#{name}:#{id}:#{a}"})
             object_attrs = {}
             redis_attrs.each_with_index {|a,i| object_attrs[a.to_sym] = stored_attrs[i]}
             records << instantiate(object_attrs)
-          rescue RedisError
-            raise RecordNotFound if options[:should_raise]
+          rescue
+            raise RecordNotFound.new("#{name}:#{id}") if options[:should_raise]
             #records << nil
           end
         end
-        (records.length == 1 ? records[0] : records)
+        (ids.length == 1 ? records[0] : records)
       end
 
       # Select which database to be used.
@@ -196,7 +154,9 @@ module RedisRecord
       #    database 15
       #  end
       def database(db)
-        @@redis.select_db db
+        puts 'Per class database selection is DISABLED.'
+        return false
+        #_connection.call_command ['select', db]
       end
 
       # Returns a new object with the given attributes hash.
@@ -208,43 +168,74 @@ module RedisRecord
       #  class Post < RedisRecord
       #    belongs_to :user
       #  end
-      def belongs_to(klass)
-        @@reflections[self.name.to_sym][:belongs_to] << klass
-        fkey = klass.to_s.foreign_key.to_sym
-        define_method(klass) {
-          k = klass.to_s.classify.constantize
-          k.find(@cached_attrs[fkey])
-        }
+      def belongs_to(*klasses)
+        klasses.each do |klass|
+          add_reflection :belongs_to, klass
+
+          fkey = klass.to_s.foreign_key.to_sym
+          define_method("#{klass}") do
+            k = klass.to_s.classify.constantize
+            k.find(@cached_attrs[fkey])
+          end
+          define_method("#{klass}=") do |new_value|
+            k = klass.to_s.classify.constantize
+            if new_value.is_a?(k)
+              @cached_attrs[fkey] = new_value.id
+              k.find(new_value.id)
+            end
+          end
+        end
       end
 
       # Has_many relationship initialization.
       #  class Post < RedisRecord
       #    has_many :comments
       #  end
-      def has_many(klass)
-        @@reflections[self.name.to_sym][:has_many] << klass
-        define_method("#{klass}") {
-          k = klass.to_s.classify.constantize
-          ids = @@redis.set_members("#{self.class.name}:#{@cached_attrs[:id]}:#{klass.to_s.singularize}_ids").to_a
-          k.find(ids)
-        }
+      def has_many(*klasses)
+        klasses.each do |klass|
+          add_reflection :has_many, klass
+
+          define_method("#{klass}") {
+            k = klass.to_s.classify.constantize
+            ids = @@redis.set_members("#{self.class.name}:#{@cached_attrs[:id]}:_#{klass.to_s.singularize}_ids").to_a
+            ids.empty? ? [] : [k.find(ids)].flatten
+          }
+        end
       end
-     
+
+      # Has_one relationship initialization.
+      #  class Post < RedisRecord
+      #    has_one :permalink
+      #  end
+      #def has_one(klass)
+      #  add_reflection :has_one, klass
+      #  define_method("#{klass}") {
+      #    k = klass.to_s.classify.constantize
+      #    k.find(@@redis["#{self.class.name}:#{@cached_attrs[:id]}:_#{klass.to_s.singularize}_id"])
+      #  }
+      #end
+
       # Has_and_belongs_to_many relationship initialization.
       def has_and_belongs_to_many(klass)
         has_many klass
-        belongs_to klass.to_s.foreign_key.to_sym
+        belongs_to klass.to_s.singularize
+      end
+
+      def add_reflection(reflection, klass)
+        @@reflections[self.name.to_sym][reflection] << klass
       end
 
     end # Class methods
-    
+
     # Instantiate a new object with the given *attrs* hash.
     def initialize(attrs={},opts={})
       @opts = opts.freeze
+
+      # Object attrs
       @cached_attrs, @stored_attrs = {}, Set.new
       add_attributes attrs
       attrs.keys.each {|k| @stored_attrs << k.to_sym} if @opts[:stored]
-      add_reflections_attributes
+      add_foreign_keys_as_attributes
     end
 
     # Save the (non-stored) object attributes to Redis.
@@ -262,28 +253,38 @@ module RedisRecord
       (@cached_attrs.keys - @stored_attrs.to_a).each do |k|
           stored << k 
           @stored_attrs << k
-          @@redis.set_add "#{self.class.name}:#{id}:attrs", k.to_s
-          @@redis["#{self.class.name}:#{@cached_attrs[:id]}:#{k}"] = @cached_attrs[k]
+          @@redis.set_add("#{self.class.name}:#{id}:attrs", k.to_s)
+          @@redis.set("#{self.class.name}:#{@cached_attrs[:id]}:#{k}", @cached_attrs[k])
       end
 
       # updated_at
-      @@redis["#{self.class.name}:#{@cached_attrs[:id]}:updated_at"] = Time.now.to_f.to_s
+      @@redis.set("#{self.class.name}:#{@cached_attrs[:id]}:updated_at", Time.now.to_f.to_s)
       stored << :updated_at 
 
       # Relationships
       @@reflections[self.class.name.to_sym][:belongs_to].each do |klass|
-        @@redis.set_add("#{klass.to_s.camelize}:#{@cached_attrs[klass.to_s.foreign_key.to_sym]}:#{self.class.name.underscore}_ids", @cached_attrs[:id])
+        @@redis.set_add("#{klass.to_s.camelize}:#{@cached_attrs[klass.to_s.foreign_key.to_sym]}:_#{self.class.name.underscore}_ids", @cached_attrs[:id])
       end
 
       return stored.to_a
     end
 
     def destroy
-      @@redis.list_rm("#{self.class.name}:list", 0, @cached_attrs[:id])
-      @cached_attrs.keys.each do |k|
-        @@redis.delete("#{self.class.name}:#{@cached_attrs[:id]}:#{k}")
+      if @cached_attrs[:id]
+        @@redis.list_rm("#{self.class.name}:list", 0, @cached_attrs[:id])
+        @cached_attrs.keys.each do |k|
+          @@redis.delete("#{self.class.name}:#{@cached_attrs[:id]}:#{k}")
+        end
+        @@redis.delete("#{self.class.name}:#{id}:attrs")
+
+        # Reflections
+        @@reflections[self.class.name.to_sym][:belongs_to].each do |klass|
+          fkey = @cached_attrs["#{klass}_id".to_sym]
+          @@redis.set_delete("#{klass.to_s.camelize}:#{fkey}:_#{self.class.name.downcase}_ids", @cached_attrs[:id]) if fkey
+        end
+
+        @cached_attrs = {}
       end
-      @@redis.delete("#{self.class.name}:#{id}:attrs")
     end
 
     # Returns *true* if there are unsaved attributes.
@@ -302,13 +303,33 @@ module RedisRecord
     end
 
     # Current instance attributes
-    def attrs
+    def attributes
       @cached_attrs.keys
+    end
+
+    # Reload from store, keeps non-stored attributes.
+    def reload
+      attrs = @@redis.set_members("#{self.class.name}:#{@cached_attrs[:id]}:attrs").map(&:to_sym)
+      attrs.each do |attr|
+        @cached_attrs[attr] = @@redis.get("#{self.class.name}:#{@cached_attrs[:id]}:#{attr}")
+      end
+      self
+    end
+
+    # Force reload from store, wipes non-stored attributes.
+    def reload!
+      @cached_attrs = {:id => @cached_attrs[:id]}
+      reload
+    end
+
+    # Set a reverse lookup by attribute.
+    def set_lookup(attr)
+      self.class._connection.set("#{self.class.name}:lookup:#{attr}:#{self.send(attr)}", self.id) if self.id
     end
 
     private
 
-    # Captures the missing methos and converts it into instance attributes.
+    # Captures the *instance* missing methods and converts it into instance attributes.
     def method_missing(*args)
       method = args[0].to_s
       case args.length
@@ -322,12 +343,15 @@ module RedisRecord
     def add_attributes(hash)
       hash.each_pair do |k,v|
         k = k.to_sym
-        #raise DuplicateAttribute unless (k == :id or !self.respond_to?(k))
+        #raise DuplicateAttribute.new("#{k}") unless (k == :id or !self.respond_to?(k))
         if k == :id or !self.respond_to?(k)
           @cached_attrs[k] = v
           meta = class << self; self; end
           meta.send(:define_method, k) { @cached_attrs[k] }
-          meta.send(:define_method, "#{k}=") { |new_value| @cached_attrs[k] = new_value; @stored_attrs.delete(k) }
+          meta.send(:define_method, "#{k}=") do |new_value| 
+            @cached_attrs[k] = new_value.is_a?(RedisRecord::Model) ? new_value.id : new_value
+            @stored_attrs.delete(k)
+          end
         end
       end
       hash
@@ -337,16 +361,14 @@ module RedisRecord
     def add_attribute(key, value=nil)
       add_attributes({key => value})
     end
- 
+
     # Add the foreign key for the belongs_to relationships
-    def add_reflections_attributes
+    def add_foreign_keys_as_attributes
       @@reflections[self.class.name.to_sym][:belongs_to].each do |klass|
         add_attribute klass.to_s.foreign_key.to_sym
       end
-      #@@reflections[self.class.name.to_sym][:has_many].each do |klass|
-      #  add_attribute "#{klass.to_s.singularize}_ids".to_sym, @@redis.set_members("#{self.class.name}:#{@cached_attrs[:id]}:#{klass.to_s.singularize}_ids").to_a
-      #end
     end
+
   end
 
 end
